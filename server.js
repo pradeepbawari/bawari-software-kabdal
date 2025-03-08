@@ -34,7 +34,7 @@ const app = express();
 // });
 
 const corsOptions = {
-  origin: ['http://srv748278.hstgr.cloud', 'http://localhost:5173'], 
+  origin: ['http://gobuyly.com', 'http://147.93.28.231', 'http://srv748278.hstgr.cloud', 'http://localhost:5173'], 
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
   credentials: true, // Required if using cookies or tokens
