@@ -122,7 +122,7 @@ const loginUser = async (req, res) => {
     return res.status(200).json({ token: token, companyDetails: user });
   } catch (err) {
     console.error(err);
-    res.status(500).json({ message: 'Internal server error user' });
+    res.status(500).json({ message: 'Internal server error user', error: err });
   }
 }
 
