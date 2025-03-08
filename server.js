@@ -34,7 +34,8 @@ const app = express();
 // });
 
 const corsOptions = {
-  origin: ['http://localhost:5173', 'http://localhost:5174'], // Ensure this matches your frontend URL
+  //origin: ['http://localhost:5173', 'http://localhost:5174'], // Ensure this matches your frontend URL
+  origin: ['http://srv748278.hstgr.cloud:5000', 'http://localhost:5173', 'http://localhost:5174'], // Ensure this matches your frontend URL
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'], // Add any other headers you need
   credentials: true, // If you're passing cookies or tokens, this is necessary
