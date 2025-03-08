@@ -34,15 +34,14 @@ const app = express();
 // });
 
 const corsOptions = {
-  //origin: ['http://localhost:5173', 'http://localhost:5174'], // Ensure this matches your frontend URL
-  origin: ['http://srv748278.hstgr.cloud:5000'], // Ensure this matches your frontend URL
+  origin: ['http://srv748278.hstgr.cloud', 'http://localhost:5173'], 
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization'], // Add any other headers you need
-  credentials: true, // If you're passing cookies or tokens, this is necessary
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  credentials: true, // Required if using cookies or tokens
 };
 
 app.use(cors(corsOptions));
-app.options('*', cors(corsOptions)); // Handle preflight requests for all routes
+app.options('*', cors(corsOptions)); // Handle preflight requests
 
 
 // Set the port
