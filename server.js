@@ -45,7 +45,7 @@ app.options('*', cors(corsOptions)); // Handle preflight requests for all routes
 
 
 // Set the port
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 3306;
 
 // Middleware
 app.use(bodyParser.json());
