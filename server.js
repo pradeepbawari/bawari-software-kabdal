@@ -78,10 +78,15 @@ app.use('/api/invoice', authenticate, createUploadPDF, uploadPDFRoutes);
 // Test DB Connection
 db.sequelize
   .authenticate()
-  .then(() => console.log('Database connected...'))
+  .then(() => console.log('Database connected bawari...'))
   .catch((err) => console.log('Error: ' + err));
 
 // Start Server
-app.listen(PORT, () => {
-  console.log(`Server running on http://localhost:${PORT}`);
+// app.listen(PORT, () => {
+//   console.log(`Server running on http://localhost:${PORT}`);
+// });
+
+app.listen(PORT, '0.0.0.0', () => {
+  console.log(`Server running on http://0.0.0.0:${PORT}`);
 });
+
