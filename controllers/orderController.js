@@ -361,7 +361,7 @@ const deleteOrder = async (req, res) => {
 };
 
 const getOrder = async (req, res) => {
-  const { order_id } = req.params;
+  const { order_id } = req.body;
 
   try {
     if (order_id) {
@@ -628,8 +628,75 @@ const sendEmail = async (data) => {
   }
 };
 
+const getSingleOrder = async (req, res) => {
+  const { orderId } = req.body; // Extract orderId from request parameters
+
+  if (!orderId) {
+    return res.status(400).json({ message: "Order ID is required" });
+  }
+
+  try {
+    const order = await db.Order.findOne({
+      where: { id: orderId }, // Filter by order ID
+      attributes: ["id", "total_amount", "gst_amount", "status", "payment_status", "grand_total", "offer", "createdAt", "statusType"],
+      include: [
+        {
+          model: db.OrderItem,
+          attributes: ["quantity", "weight", "price", "gst", "unit", "offer", "total"],
+          include: [
+            {
+              model: db.Product,
+              attributes: ["id", "name", "company"],
+              required: false, // Allow Product to be null
+            },
+          ],
+        },
+        {
+          model: db.User,
+          attributes: ["id", "name", "email", "company", "mobile_number"],
+        },
+      ],
+    });
+
+    if (!order) {
+      return res.status(404).json({ message: "Order not found" });
+    }
+
+    // Return structured response
+    res.status(200).json({
+      order: {
+        id: order.id,
+        user: order.User,
+        totalAmount: parseInt(order.total_amount),
+        gstAmount: parseInt(order.gst_amount),
+        order_status: order.status,
+        payment_status: order.payment_status,
+        grandTotal: parseInt(order.grand_total),
+        offer: parseInt(order.offer),
+        statusType: order.statusType,
+        items: order.OrderItems.map((item) => ({
+          product_id: item.Product ? item.Product.id : null,
+          product_name: item.Product ? item.Product.name : null,
+          company: item.Product ? item.Product.company : null,
+          quantity: parseInt(item.quantity),
+          weight: item.weight,
+          sale_price: parseInt(item.price),
+          gst: parseInt(item.gst),
+          unit: item.unit,
+          offer: parseInt(item.offer),
+          total: parseInt(item.total),
+        })),
+        createdAt: order.createdAt,
+      },
+    });
+  } catch (error) {
+    console.error("Error fetching order:", error);
+    res.status(500).json({ error: error.message });
+  }
+};
 
 
 
 
-module.exports = { createOrder, updateOrder, deleteOrder, getOrder, getAllOrders, getUserOrders, createUserOrder, updateUserOrder };
+
+module.exports = { createOrder, updateOrder, deleteOrder, getOrder, getAllOrders, getUserOrders, createUserOrder, updateUserOrder, getSingleOrder };

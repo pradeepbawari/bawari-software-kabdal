@@ -16,6 +16,26 @@ module.exports = (sequelize, DataTypes) => {
         allowNull: false,
         unique: true,
       },
+      height: {
+        type: DataTypes.INTEGER,
+        allowNull: false,
+        unique: true,
+      },
+      height_unit: {
+        type: DataTypes.STRING,
+        allowNull: false,
+        unique: true,
+      },
+      capacity: {
+        type: DataTypes.INTEGER,
+        allowNull: false,
+        unique: true,
+      },
+      capacity_unit: {
+        type: DataTypes.STRING,
+        allowNull: false,
+        unique: true,
+      },
     },
     {
       tableName: "weights",

@@ -33,7 +33,7 @@ const createProducts = async (req, res) => {
       category_id, 
       dealer_id, 
       company,
-      subcategory_id 
+      subcategory_id
     });
     const productId = product.id;
 
@@ -51,31 +51,18 @@ const createProducts = async (req, res) => {
     // 3. Process variants
     if (productId &&variants || variants.length > 0) {
       const variantPromises = variants.map(async (variant) => {
-        const { color, hex_code, weight, price, sale_price, stock, deleted, unit } = variant;
-  
-        // Find or create color
-        let [colorRecord] = await db.Color.findOrCreate({
-          where: { name: color },
-          defaults: { hex_code },
-        });
-        const colorId = colorRecord.id;
-  
-        // Find or create weight
-        let [weightRecord] = await db.Weight.findOrCreate({
-          where: { weight, unit }, // Check for both weight and unit
-        });
-        console.log(weightRecord, "weightRecord");
-        const weightId = weightRecord.id;
-  
+        const { price, sale_price, stock, deleted, materials, colour, dimensions } = variant;
+
         // Create product variant
         return db.Variant.create({
           product_id: productId,
-          color_id: colorId,
-          weight_id: weightId,
+          colour,
           price,
           sale_price,
           stock,
-          deleted
+          materials,
+          deleted,
+          dimensions
         });      
       });
   
@@ -101,14 +88,6 @@ const fetchAfterUpdate = async (productId) => {
     const fullProduct = await db.Product.findOne({
       where: { id: productId },
       include: [
-        {
-          model: db.Variant,
-          as: 'variants',
-          include: [
-            { model: db.Color, as: 'color', attributes: ['name', 'hex_code'] },
-            { model: db.Weight, as: 'weight', attributes: ['weight', 'unit'] },
-          ],
-        },
         {
           model: db.Category,
           as: 'category',
@@ -151,14 +130,6 @@ const getAllProducts = async (req, res) => {
       distinct: true,  // Ensure distinct count of products
       include: [
         {
-          model: db.Variant,
-          as: 'variants',
-          include: [
-            { model: db.Color, as: 'color', attributes: ['name', 'hex_code'] },
-            { model: db.Weight, as: 'weight', attributes: ['weight','unit'] },
-          ],
-        },
-        {
           model: db.ProductImage,
           as: 'imagesT',
           attributes: ['id', 'image_url', 'public_id', 'product_id'],
@@ -167,7 +138,15 @@ const getAllProducts = async (req, res) => {
           model: db.Category,
           as: 'category',
           attributes: ['id', 'name'],
+          include: [
+            {
+              model: db.Subcategory,
+              as: 'subcategories',
+              attributes: ['id', 'name'],
+            },
+          ]
         },
+        
       ],
       order: orderByCondition, // Apply the ordering condition
       where: whereCondition, // Apply the filters (or no filter if filters is null)
@@ -225,43 +204,11 @@ const updateProducts = async (req, res) => {
     // 2. Update Variants
     if (variants && variants.length > 0) {
       for (const variant of variants) {
-        const { variant_id, color, hex_code, weight, price, sale_price, stock, deleted, weight_id, unit } = variant;
-
-        // Find or create color
-        const [colorRecord] = await db.Color.findOrCreate({
-          where: { name: color },
-          defaults: { hex_code },
-        });
-        const colorId = colorRecord.id;
-
-        // Find or create the weight
-        let weightRecord;
-        if (weight_id) {
-          // If weight_id is provided, we check for the existing weight.
-          weightRecord = await db.Weight.findOne({ where: { id: weight_id } });
-          if (weightRecord) {
-            //console.log(`Updating existing weight record (ID: ${weightRecord.id}) with weight: ${weight}`);
-            // Update the weight only if necessary (optional)
-            await db.Weight.update(
-              { weight, unit }, // Update the weight field
-              { where: { id: weightRecord.id } }
-            );
-          } else {
-            return res.status(400).json({ error: `Weight with ID ${weight_id} not found.` });
-          }
-        } else {
-          // If weight_id is not provided, create a new weight record
-          console.log(`Creating new weight record for weight: ${weight}`);
-          weightRecord = await db.Weight.create({
-            weight, unit
-          });
-        }
-
-        const weightId = weightRecord.id;
+        const { variant_id, price, sale_price, stock, deleted, materials, dimensions, colour } = variant;
 
         // Check if the variant exists
         if (variant_id) {
-          if (deleted) {
+          if (deleted === true) {
             console.log(`Deleting variant with ID: ${variant_id}`);
             await db.Variant.destroy({ where: { id: variant_id } });
           } else {
@@ -270,7 +217,7 @@ const updateProducts = async (req, res) => {
               // Update the existing variant
               console.log(`Updating variant with ID: ${variant_id}`);
               await db.Variant.update(
-                { color_id: colorId, weight_id: weightId, price, sale_price, stock },
+                { colour, price, sale_price, stock, dimensions, materials },
                 { where: { id: variant_id } }
               );
             } else {
@@ -282,12 +229,13 @@ const updateProducts = async (req, res) => {
           console.log(`Creating new variant for product ID: ${id}`);
           await db.Variant.create({
             product_id: id,
-            color_id: colorId,
-            weight_id: weightId,
+            colour,
             price,
             sale_price,
             stock,
-            deleted
+            materials,
+            deleted,
+            dimensions
           });
         }
       }
@@ -488,6 +436,24 @@ const filterUserProducts = async (req, res) => {
   }
 };
 
+const fetchSingleProduct = async (req, res) => {
+  const { productId } = req.body; // Ensure this is inside an Express route
+
+  if (!productId) {
+    return res.status(400).json({ error: "Product ID is required" });
+  }
+
+  try {
+    const products = await db.Variant.findAll({
+        where: { product_id: productId }, // Query variants for a given product
+    });
+
+    res.json(products);
+  } catch (error) {
+    console.error("Error fetching product variants:", error);
+    res.status(500).json({ error: "Failed to fetch product variants" });
+  }
+};
 
 
 
@@ -497,5 +463,6 @@ module.exports = {
   updateProducts,
   deleteProducts,
   filterProducts,
-  filterUserProducts
+  filterUserProducts,
+  fetchSingleProduct
 };

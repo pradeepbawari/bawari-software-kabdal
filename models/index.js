@@ -47,11 +47,11 @@ db.Category.hasMany(db.Product, { foreignKey: 'category_id', as: 'products' });
 db.Product.hasMany(db.Variant, { foreignKey: 'product_id', as: 'variants' });
 db.Variant.belongsTo(db.Product, { foreignKey: 'product_id', as: 'product' });
 
-db.Variant.belongsTo(db.Color, { foreignKey: 'color_id', as: 'color' });
-db.Color.hasMany(db.Variant, { foreignKey: 'color_id', as: 'variants' });
+// db.Variant.belongsTo(db.Color, { foreignKey: 'color_id', as: 'color' });
+// db.Color.hasMany(db.Variant, { foreignKey: 'color_id', as: 'variants' });
 
-db.Variant.belongsTo(db.Weight, { foreignKey: 'weight_id', as: 'weight' });
-db.Weight.hasMany(db.Variant, { foreignKey: 'weight_id', as: 'variants' });
+// db.Variant.belongsTo(db.Weight, { foreignKey: 'weight_id', as: 'weight' });
+// db.Weight.hasMany(db.Variant, { foreignKey: 'weight_id', as: 'variants' });
 
 
 // In the Product model:

@@ -38,8 +38,8 @@ const getDashboardData = async (req, res) => {
       dealers: { total: totalDealers },
     });
   } catch (error) {
-    // console.error('Error fetching dashboard data:', error.message);
-    res.status(500).json({ error: 'Failed to fetch dashboard data. Please try again later.', text: error });
+    console.error('Error fetching dashboard data:', error.message);
+    res.status(500).json({ error: 'Failed to fetch dashboard data. Please try again later.' });
   }
 };
 

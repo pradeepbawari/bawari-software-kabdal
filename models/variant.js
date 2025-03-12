@@ -11,16 +11,6 @@ module.exports = (sequelize, DataTypes) => {
         allowNull: false,
         unique: true,
       },
-      color_id : {
-        type: DataTypes.INTEGER,
-        allowNull: false,
-        unique: true,
-      },
-      weight_id : {
-        type: DataTypes.INTEGER,
-        allowNull: false,
-        unique: true,
-      },
       price : {
         type: DataTypes.INTEGER,
         allowNull: false,
@@ -36,8 +26,19 @@ module.exports = (sequelize, DataTypes) => {
         allowNull: false,
         unique: true,
       },
+      materials : {
+        type: DataTypes.STRING,
+        allowNull: false,
+        unique: true,
+      },
       deleted : {
         type: DataTypes.BOOLEAN,
+        allowNull: false,
+        unique: true,
+      },
+      dimensions: { type: DataTypes.JSON, allowNull: false },
+      colour: { 
+        type: DataTypes.STRING,
         allowNull: false,
         unique: true,
       },

@@ -39,9 +39,25 @@ const searchProduct = async (req, res) => {
 	  })),
 	};
     const products = await db.Product.findAndCountAll({
+      distinct: true,
+      include: [
+        {
+                  model: db.Category,
+                  as: 'category',
+                  attributes: ['id', 'name'],
+                  include: [
+                    {
+                      model: db.Subcategory,
+                      as: 'subcategories',
+                      attributes: ['id', 'name'],
+                    },
+                  ]
+                },
+      ],
 	  where: filters ? searchConditions : undefined, // Apply filters
       limit: parseInt(limit), // Apply limit
       offset: parseInt(offset), // Apply offset
+      distinct: true,
       //order: orderBy.sort
 	}); // Fetch all users
 

@@ -24,17 +24,11 @@ const setting = require('./models/setting');
 
 const app = express();
 
-// CORS middleware
-// app.use(function(req, res, next) {
-//     res.setHeader('Access-Control-Allow-Origin', '*');
-//     res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE');
-//     res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
-//     res.setHeader('Access-Control-Allow-Credentials', true);
-//     next();
-// });
-
 const corsOptions = {
-  origin: ['http://gobuyly.com', 'http://admin.gobuyly.com', 'http://147.93.28.231', 'http://srv748278.hstgr.cloud', 'http://localhost:5173'], 
+  // production
+  // origin: ['http://gobuyly.com', 'http://admin.gobuyly.com', 'http://147.93.28.231', 'http://srv748278.hstgr.cloud', 'http://localhost:5173', 'http://localhost:5174'], 
+  // local
+  origin: ['http://gobuyly.com', 'http://admin.gobuyly.com', 'http://147.93.28.231', 'http://srv748278.hstgr.cloud'], 
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
   credentials: true, // Required if using cookies or tokens
@@ -44,8 +38,11 @@ app.use(cors(corsOptions));
 app.options('*', cors(corsOptions)); // Handle preflight requests
 
 
-// Set the port
+// Set the port production
 const PORT = process.env.PORT || 5000;
+
+// Set the port local
+// const PORT = process.env.PORT || 3000;
 
 // Middleware
 app.use(bodyParser.json());
@@ -75,15 +72,15 @@ app.use('/api/upload', authenticate, createUpload, uploadRoutes);  // Apply uplo
 app.use('/api/invoice', authenticate, createUploadPDF, uploadPDFRoutes); 
 
 // Test DB Connection
+// db.sequelize
+//   .authenticate()
+//   .then(() => console.log('Database connected bawari...'))
+//   .catch((err) => console.log('Error: ' + err));
+
 db.sequelize
   .authenticate()
   .then(() => console.log('Database connected bawari...'))
-  .catch((err) => console.log('Error: ' + err));
-
-// Start Server
-// app.listen(PORT, () => {
-//   console.log(`Server running on http://localhost:${PORT}`);
-// });
+  .catch((err) => console.log('Error: '));
 
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`Server running on http://0.0.0.0:${PORT}`);
