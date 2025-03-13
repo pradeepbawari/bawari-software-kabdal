@@ -12,3 +12,4 @@ router.post("/filterProducts", filterProducts);
 router.post("/filterUserProducts", filterUserProducts);
 
 module.exports = router;
+ 

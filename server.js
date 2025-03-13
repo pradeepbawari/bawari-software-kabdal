@@ -66,7 +66,7 @@ app.use('/api/invoice', authenticate, invoiceRoutes);
 app.use('/api/search', authenticate, searchRoutes);
 app.use('/api/setting', authenticate, createUpload, settingRoutes);
 app.use('/api/comments', authenticate, commentRoutes);
-
+ 
 // File upload route
 app.use('/api/upload', authenticate, createUpload, uploadRoutes);  // Apply upload middleware to the '/upload' route
 app.use('/api/invoice', authenticate, createUploadPDF, uploadPDFRoutes); 
