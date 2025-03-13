@@ -26,9 +26,9 @@ const app = express();
 
 const corsOptions = {
   // production
-  // origin: ['http://gobuyly.com', 'http://admin.gobuyly.com', 'http://147.93.28.231', 'http://srv748278.hstgr.cloud', 'http://localhost:5173', 'http://localhost:5174'], 
+  origin: ['http://gobuyly.com', 'http://admin.gobuyly.com', 'http://147.93.28.231', 'http://srv748278.hstgr.cloud', 'http://localhost:5173', 'http://localhost:5174'], 
   // local
-  origin: ['http://gobuyly.com', 'http://admin.gobuyly.com', 'http://147.93.28.231', 'http://srv748278.hstgr.cloud'], 
+  // origin: ['http://gobuyly.com', 'http://admin.gobuyly.com', 'http://147.93.28.231', 'http://srv748278.hstgr.cloud'], 
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
   credentials: true, // Required if using cookies or tokens
@@ -66,7 +66,7 @@ app.use('/api/invoice', authenticate, invoiceRoutes);
 app.use('/api/search', authenticate, searchRoutes);
 app.use('/api/setting', authenticate, createUpload, settingRoutes);
 app.use('/api/comments', authenticate, commentRoutes);
-
+ 
 // File upload route
 app.use('/api/upload', authenticate, createUpload, uploadRoutes);  // Apply upload middleware to the '/upload' route
 app.use('/api/invoice', authenticate, createUploadPDF, uploadPDFRoutes); 
