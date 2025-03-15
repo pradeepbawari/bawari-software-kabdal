@@ -561,7 +561,7 @@ const getUserOrders = async (req, res) => {
       include: [
         {
           model: db.OrderItem,
-          attributes: ["quantity", "weight", "price", "gst", "unit", "offer", "total"],
+          attributes: ["quantity", "price", "gst", "offer", "total"],
           include: [
             {
               model: db.Product,
@@ -605,10 +605,8 @@ const getUserOrders = async (req, res) => {
             product_name: item.Product ? item.Product.name : null,
             company: item.Product ? item.Product.company : null,
             quantity: parseInt(item.quantity),
-            weight: item.weight,
             sale_price: parseInt(item.price),
             gst: parseInt(item.gst),
-            unit: item.unit,
             offer: parseInt(item.offer),
             total: parseInt(item.total),
           })),
