@@ -817,7 +817,7 @@ const getSingleOrderAdmin = async (req, res) => {
           total: parseInt(item.total),
           offer: parseInt(item.offer),
           dimensions: item.dimensions,
-          variant: variantMap[item.variantId] || null, // Attach variant data
+          variant: item.variantId || null, // Attach variant data
           id: item.id,
         })),
         createdAt: order.createdAt,
