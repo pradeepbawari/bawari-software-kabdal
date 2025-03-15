@@ -135,10 +135,9 @@ const createUserOrder = async (req, res) => {
         quantity: item.quantity,
         price: item.price,
         gst: item.gst_rate,
-        weight: item.weight,
-        unit: item.unit,
+        variantId:item.variantId,
         offer: item.offer,
-        // gst: item.color,
+        dimensions: item.dimensions,
         total: itemTotal + itemGST,
       };
     });
@@ -186,42 +185,39 @@ const updateOrder = async (req, res) => {
 
     // Validate products in the items
     const productIds = items.map((item) => item.product_id);
-    const products = await db.Product.findAll({
-      where: { id: productIds },
-    });
+    const products = await db.Product.findAll({ where: { id: productIds } });
 
     const productIdsInDb = products.map((product) => product.id);
     const invalidProductIds = productIds.filter((id) => !productIdsInDb.includes(id));
 
     if (invalidProductIds.length > 0) {
-      return res.status(400).json({
-        error: `Product(s) with id(s) ${invalidProductIds.join(', ')} do not exist`,
-      });
+      return res.status(400).json({ error: `Product(s) with id(s) ${invalidProductIds.join(', ')} do not exist` });
     }
 
     // Recalculate totals and prepare updated items
     let totalAmount = 0;
     let gstAmount = 0;
     let offerTotal = 0;
-	
-    const updatedOrderItems = items.map((item) => {
+
+    for (const item of items) {
       const itemTotal = item.price * item.quantity;
       const itemGST = (item.price * item.gst_rate * item.quantity) / 100;
       totalAmount += itemTotal;
       gstAmount += itemGST;
 
-      const sale_price = item.price === '' ? 0 : parseFloat(item.price);
-      const quantity = item.quantity === '' ? 0 : parseFloat(item.quantity);
-      const gst = item.gst_rate === '' ? 0 : parseFloat(item.gst_rate);
-      const offer = item?.offer === '' ? 0 : parseFloat(item?.offer);
-      const totalwithGst = ((sale_price * quantity) + (((sale_price * quantity) * gst)/100))
-      const offerAmount = (totalwithGst * (offer/100));
+      const sale_price = parseFloat(item.price) || 0;
+      const quantity = parseFloat(item.quantity) || 0;
+      const gst = parseFloat(item.gst_rate) || 0;
+      const offer = parseFloat(item.offer) || 0;
 
-      offerTotal += offerAmount
+      const totalWithGst = (sale_price * quantity) + ((sale_price * quantity * gst) / 100);
+      const offerAmount = (totalWithGst * (offer / 100));
+      offerTotal += offerAmount;
 
-      return {
+      // Upsert order item (Insert if not exists, Update if exists)
+      await db.OrderItem.upsert({
         order_id: order.id,
-		    product_id: item.product_id,
+        product_id: item.product_id,
         quantity: item.quantity,
         weight: item.weight,
         unit: item.unit,
@@ -229,29 +225,33 @@ const updateOrder = async (req, res) => {
         price: item.price,
         gst: item.gst_rate,
         total: itemTotal + itemGST,
-      };
-    });
+        id:item.id
+      }, {
+        where: {
+          order_id: order.id,
+          product_id: item.product_id,
+        }
+      });
+    }
 
     // Update order details
     order.total_amount = totalAmount;
     order.gst_amount = gstAmount;
     order.grand_total = totalAmount + gstAmount;
-    order.offer =  offerTotal;
-	order.status = status,
-	order.payment_status = payment_status,
-  order.comments = comments,
+    order.offer = offerTotal;
+    order.status = status;
+    order.payment_status = payment_status;
+    order.comments = comments;
+
     await order.save();
 
-    // Update order items
-    await db.OrderItem.destroy({ where: { order_id: order.id } }); // Clear existing items
-    await db.OrderItem.bulkCreate(updatedOrderItems); // Add updated items
-    // await sendEmail({ userData: userData, items: items });
     res.status(200).json({ message: 'Order updated successfully!', order });
   } catch (error) {
-    console.error(error); // For debugging purposes
+    console.error(error);
     res.status(500).json({ error: error.message });
   }
 };
+
 
 const updateUserOrder = async (req, res) => {
   const { order_id, status, payment_status, comments, items, userData, statusType } = req.body;
@@ -487,6 +487,58 @@ const getAllOrders = async (req, res) => {
   }
 };
 
+const getAllOrdersAdmin = async (req, res) => {
+  const { limit, offset, orderBy, filters } = req.body;
+
+  try {
+    const parsedLimit = limit ? parseInt(limit, 10) : 10;
+    const parsedOffset = offset ? parseInt(offset, 10) : 0;
+    const orderByCondition = [['createdAt', 'DESC']];
+    const whereCondition = filters || {}; 
+
+    // Fetch orders with pagination, ordering, and optional filtering
+    const orders = await db.Order.findAndCountAll({
+      include: [
+        {
+          model: db.User,
+          attributes: ['id', 'name', 'email', 'company', 'mobile_number'],
+        },
+      ],
+      order: orderByCondition, // Apply the ordering condition
+      where: whereCondition, // Apply the filters (or no filter if filters is null)
+      limit: parsedLimit, // Apply pagination limit
+      offset: parsedOffset, // Apply pagination offset
+    });
+
+    // If no orders are found, return a 404 error
+    if (!orders || orders.rows.length === 0) {
+      return res.status(404).json({ message: 'No orders found' });
+    }
+
+    // Map over the orders to return structured data
+    res.status(200).json({
+      orders: {
+        count: orders.count, // Total number of orders
+        rows: orders.rows.map((order) => ({
+          id: order.id,
+          user: order.User,
+          totalAmount: parseInt(order.total_amount),
+          gstAmount: parseInt(order.gst_amount),
+          order_status: order.status,
+          payment_status: order.payment_status,
+          grandTotal: parseInt(order.grand_total),
+          offer: parseInt(order.offer),
+          createdAt: order.createdAt,
+        })),
+      },
+    });
+  } catch (error) {
+    // Catch any errors and return a 500 status
+    console.error(error);
+    res.status(500).json({ error: error.message });
+  }
+};
+
 const getUserOrders = async (req, res) => {
   const { limit, offset, orderBy, filters } = req.body;
   // const modifyFilter = {...filters, 'statusType': 'Ordered'}
@@ -642,7 +694,7 @@ const getSingleOrder = async (req, res) => {
       include: [
         {
           model: db.OrderItem,
-          attributes: ["quantity", "weight", "price", "gst", "unit", "offer", "total"],
+          attributes: ["id", "quantity", "price", "gst", "dimensions", "total"],
           include: [
             {
               model: db.Product,
@@ -679,12 +731,97 @@ const getSingleOrder = async (req, res) => {
           product_name: item.Product ? item.Product.name : null,
           company: item.Product ? item.Product.company : null,
           quantity: parseInt(item.quantity),
-          weight: item.weight,
           sale_price: parseInt(item.price),
           gst: parseInt(item.gst),
-          unit: item.unit,
-          offer: parseInt(item.offer),
           total: parseInt(item.total),
+          dimensions: item.dimensions,
+          id: item.id
+        })),
+        createdAt: order.createdAt,
+      },
+    });
+  } catch (error) {
+    console.error("Error fetching order:", error);
+    res.status(500).json({ error: error.message });
+  }
+};
+
+
+const getSingleOrderAdmin = async (req, res) => {
+  const { orderId } = req.body;
+
+  if (!orderId) {
+    return res.status(400).json({ message: "Order ID is required" });
+  }
+
+  try {
+    const order = await db.Order.findOne({
+      where: { id: orderId },
+      attributes: [
+        "id", "total_amount", "gst_amount", "status", 
+        "payment_status", "grand_total", "offer", "createdAt", "statusType"
+      ],
+      include: [
+        {
+          model: db.OrderItem,
+          attributes: ["id", "quantity", "price", "gst", "dimensions", "total", "variantId", "offer"], // Include variant_id
+          include: [
+            {
+              model: db.Product,
+              attributes: ["id", "name", "company", "sale_price", "price", "gst_rate"],
+              required: false,
+            },
+          ],
+        },
+        {
+          model: db.User,
+          attributes: ["id", "name", "email", "company", "mobile_number"],
+        },
+      ],
+    });
+
+    if (!order) {
+      return res.status(404).json({ message: "Order not found" });
+    }
+
+    // Fetch variant details separately
+    const variantIds = order.OrderItems.map((item) => item.variant_id).filter(Boolean);
+
+    const variants = await db.Variant.findAll({
+      where: { id: variantIds },
+      attributes: ["id", "dimensions", "stock", "sale_price"],
+    });
+
+    const variantMap = variants.reduce((acc, variant) => {
+      acc[variant.id] = variant;
+      return acc;
+    }, {});
+
+    // Structure the response
+    res.status(200).json({
+      order: {
+        id: order.id,
+        user: order.User,
+        totalAmount: parseInt(order.total_amount),
+        gstAmount: parseInt(order.gst_amount),
+        order_status: order.status,
+        payment_status: order.payment_status,
+        grandTotal: parseInt(order.grand_total),
+        offer: parseInt(order.offer),
+        statusType: order.statusType,
+        items: order.OrderItems.map((item) => ({
+          product_id: item.Product ? item.Product.id : null,
+          product_name: item.Product ? item.Product.name : null,
+          company: item.Product ? item.Product.company : null,
+          quantity: parseInt(item.quantity),
+          sale_price: parseInt(item.Product.sale_price),
+          price: parseInt(item.Product.price),
+          gst: parseInt(item.Product.gst_rate),
+          total: parseInt(item.total),
+          offer: parseInt(item.offer),
+          dimensions: item.dimensions,
+          variant: variantMap[item.variantId] || null, // Attach variant data
+          id: item.id,
         })),
         createdAt: order.createdAt,
       },
@@ -697,6 +834,4 @@ const getSingleOrder = async (req, res) => {
 
 
 
-
-
-module.exports = { createOrder, updateOrder, deleteOrder, getOrder, getAllOrders, getUserOrders, createUserOrder, updateUserOrder, getSingleOrder };
+module.exports = { createOrder, updateOrder, deleteOrder, getOrder, getAllOrders, getUserOrders, createUserOrder, updateUserOrder, getSingleOrder, getAllOrdersAdmin, getSingleOrderAdmin };

@@ -6,10 +6,12 @@ module.exports = (sequelize, DataTypes) => {
     quantity: { type: DataTypes.INTEGER, allowNull: false },
     price: { type: DataTypes.DECIMAL(10, 2), allowNull: false },
     gst: { type: DataTypes.DECIMAL(10, 2), allowNull: false },
+    variantId: { type: DataTypes.INTEGER, allowNull: false },
     total: { type: DataTypes.DECIMAL(10, 2), allowNull: false },
     weight: { type: DataTypes.INTEGER, allowNull: false },
     unit: { type: DataTypes.STRING, allowNull: false },
     offer: { type: DataTypes.INTEGER, allowNull: false },
+    dimensions: { type: DataTypes.JSON, allowNull: false },
 }, {
   tableName: 'order_items',
   timestamps: true,

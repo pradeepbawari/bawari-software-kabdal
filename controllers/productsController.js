@@ -1,7 +1,7 @@
 // controllers/productsController.js
 const db = require("../models");
 const { Product, Dealer, Category, Color, Weight, Variant } = require("../models");
-const { Op } = require('sequelize');
+const { Op, where } = require('sequelize');
 const subcategory = require("../models/subcategory");
 
 const createProducts = async (req, res) => {
@@ -276,43 +276,35 @@ const deleteProducts = async (req, res) => {
 };
 
 const filterProducts = async (req, res) => {
-  const { limit, offset, orderBy, filters } = req.body;
-  const parsedLimit = limit ? parseInt(limit, 10) : 10;
-  const parsedOffset = offset ? parseInt(offset, 10) : 0;
-  const orderByCondition = orderBy?.length ? [[orderBy[0].colId, orderBy[0].sort]] : [['createdAt', 'DESC']];
-
-  // Build the dynamic where condition based on filter priority
-  let whereCondition = {};
-  
-  if (filters) {
-    if (filters.parent_id === null) {
-      if (filters.id) {
-        whereCondition.subcategory_id = filters.id;
-      } else if (filters.category_id) {
-        whereCondition.category_id = filters.category_id;
-      }
-    } else {
-      if (filters.parent_id !== null) {
-        whereCondition['subcategory_id'] = filters.parent_id
-        // whereCondition.parent_id = filters.parent_id;
-      }else{
-      // If parent_id is not null, use normal filters
-      whereCondition = filters;
-      }      
-    }
-  }
-
   try {
+    const { limit = 10, offset = 0, orderBy, filters } = req.body;
+    
+    const parsedLimit = parseInt(limit, 10);
+    const parsedOffset = parseInt(offset, 10);
+    const orderByCondition = orderBy?.length ? [[orderBy[0].colId, orderBy[0].sort]] : [["createdAt", "DESC"]];
+
+    // Construct the where condition dynamically
+    let whereCondition = {};
+
+    if (filters) {
+      if (filters.parent_id === null) {
+        whereCondition.subcategory_id = filters.id || filters.category_id;
+      } else if (filters.parent_id !== undefined) {
+        whereCondition.subcategory_id = filters.parent_id;
+      } else {
+        whereCondition = { ...filters };
+      }
+    }
+
+    // Fetch products with necessary associations
     const products = await db.Product.findAndCountAll({
       distinct: true,
       include: [
         {
           model: db.Variant,
           as: "variants",
-          include: [
-            { model: db.Color, as: "color", attributes: ["name", "hex_code"] },
-            { model: db.Weight, as: "weight", attributes: ["weight", "unit"] },
-          ],
+          required: false,
+          attributes: ["id", "colour", "dimensions", "materials", "sale_price", "colour","stock"]
         },
         {
           model: db.ProductImage,
@@ -323,23 +315,32 @@ const filterProducts = async (req, res) => {
           model: db.Category,
           as: "category",
           attributes: ["id", "name"],
+          include: filters.id
+            ? [
+                {
+                  model: db.Subcategory,
+                  as: "subcategories",
+                  where: { id: filters.id },
+                  attributes: ["id", "name"],
+                },
+              ]
+            : [], // Avoids filtering if parent_id is undefined
         },
       ],
       order: orderByCondition,
-      where: whereCondition, // Use dynamically constructed whereCondition
+      where: whereCondition,
       limit: parsedLimit,
       offset: parsedOffset,
-      distinct: true,
       col: "id",
     });
 
-    // Process dealer information
+    // Process dealer information efficiently
     const productWithDealers = await Promise.all(
       products.rows.map(async (product) => {
         const dealerIds = product.dealer_id
-          ? product.dealer_id.split(",").map((id) => parseInt(id.trim())).filter((id) => !isNaN(id))
+          ? product.dealer_id.split(",").map(Number).filter((id) => !isNaN(id))
           : [];
-        
+
         const dealers = dealerIds.length
           ? await db.Dealer.findAll({
               where: { id: { [Op.in]: dealerIds } },
@@ -357,9 +358,10 @@ const filterProducts = async (req, res) => {
         rows: productWithDealers,
       },
     });
+
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ error: "Failed to fetch products" });
+    console.error("Error fetching products:", error);
+    res.status(500).json({ error: "Failed to fetch products", message: error.message });
   }
 };
 
@@ -432,7 +434,7 @@ const filterUserProducts = async (req, res) => {
     });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ error: 'Failed to fetch products' });
+    res.status(500).json({ error: 'Failed to fetch products', mess: error });
   }
 };
 
