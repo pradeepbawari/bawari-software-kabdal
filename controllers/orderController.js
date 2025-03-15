@@ -219,12 +219,11 @@ const updateOrder = async (req, res) => {
         order_id: order.id,
         product_id: item.product_id,
         quantity: item.quantity,
-        weight: item.weight,
-        unit: item.unit,
         offer: item.offer,
         price: item.price,
         gst: item.gst_rate,
         total: itemTotal + itemGST,
+        dimensions: item.dimensions,
         id:item.id
       }, {
         where: {
