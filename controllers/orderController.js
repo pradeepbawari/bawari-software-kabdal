@@ -224,7 +224,8 @@ const updateOrder = async (req, res) => {
         gst: item.gst_rate,
         total: itemTotal + itemGST,
         dimensions: item.dimensions,
-        id:item.id
+        id:item.id,
+        variantId: item.variantId
       }, {
         where: {
           order_id: order.id,
