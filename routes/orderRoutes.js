@@ -1,5 +1,5 @@
 const express = require('express');
-const { createOrder, updateOrder, deleteOrder, getOrder, getAllOrders, getUserOrders, createUserOrder, updateUserOrder, getSingleOrder, getAllOrdersAdmin, getSingleOrderAdmin } = require('../controllers/orderController');
+const { createOrder, updateOrder, deleteOrder, getOrder, getAllOrders, getUserOrders, createUserOrder, updateUserOrder, getSingleOrder, getAllOrdersAdmin, getSingleOrderAdmin, quotationUpdate } = require('../controllers/orderController');
 const router = express.Router();
 
 // POST endpoint to create an order
@@ -21,5 +21,6 @@ router.post('/adminOrdersById/', getSingleOrderAdmin);
 router.post('/userOrders/', getUserOrders);
 router.post('/userOrdersById/', getSingleOrder);
 router.put('/updateUserOrders/:order_id', updateUserOrder);
+router.put('/quotation/:order_id', quotationUpdate);
  
 module.exports = router;

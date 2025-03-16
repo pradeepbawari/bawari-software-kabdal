@@ -189,14 +189,6 @@ const searchUserProduct = async (req, res) => {
       distinct: true,
             include: [
               {
-                model: db.Variant,
-                as: "variants",
-                include: [
-                  { model: db.Color, as: "color", attributes: ["name", "hex_code"] },
-                  { model: db.Weight, as: "weight", attributes: ["weight", "unit"] },
-                ],
-              },
-              {
                 model: db.ProductImage,
                 as: "imagesT",
                 attributes: ["id", "image_url", "public_id", "product_id"],
