@@ -27,6 +27,12 @@ module.exports = (sequelize, DataTypes) => {
           key: "id",
         },
       },
+      
+      icon: {
+        type: DataTypes.STRING,
+        allowNull: false,
+        unique: true,
+      },
     },
     {
       tableName: "subcategories",
