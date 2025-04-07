@@ -39,6 +39,7 @@ db.Comments = require('./comment')(sequelize, DataTypes);
 db.productNew = require('./productNew')(sequelize, DataTypes);
 db.productAttribute = require('./productAttribute')(sequelize, DataTypes);
 db.companyNew = require('./companyNew')(sequelize, DataTypes);
+db.materialsList = require('./materials_list')(sequelize, DataTypes);
 // Define relationships
 
 db.Product.belongsTo(db.Category, { foreignKey: 'category_id', as: 'category' });
