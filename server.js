@@ -17,6 +17,7 @@ const uploadPDFRoutes = require('./routes/uploadPDFRoutesRoutes');
 const authenticate = require('./utiles/middleware');
 const adminRoutes = require('./routes/adminRoutes');
 const commentRoutes = require('./routes/commentRoutes');
+const commonRoutes = require('./routes/commonRoutes');
 
 // Import the upload middleware
 const { upload, uploadPDF } = require('./uploadImages/imageUpload'); 
@@ -25,9 +26,9 @@ const setting = require('./models/setting');
 const app = express();
 
 const corsOptions = {
-  // production
-  // origin: ['http://gobuyly.com', 'http://admin.gobuyly.com', 'http://147.93.28.231', 'http://srv748278.hstgr.cloud', 'http://localhost:5173', 'http://localhost:5174'], 
   // local
+  // origin: ['http://gobuyly.com', 'http://admin.gobuyly.com', 'http://147.93.28.231', 'http://srv748278.hstgr.cloud', 'http://localhost:5173', 'http://localhost:5174'], 
+  // production
   origin: ['http://gobuyly.com', 'http://admin.gobuyly.com', 'http://147.93.28.231', 'http://srv748278.hstgr.cloud'], 
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
@@ -39,10 +40,10 @@ app.options('*', cors(corsOptions)); // Handle preflight requests
 
 
 // Set the port production
-const PORT = process.env.PORT || 5000;
+// const PORT = process.env.PORT || 5000;
 
 // Set the port local
-// const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 3000;
 
 // Middleware
 app.use(bodyParser.json());
@@ -66,6 +67,7 @@ app.use('/api/invoice', authenticate, invoiceRoutes);
 app.use('/api/search', authenticate, searchRoutes);
 app.use('/api/setting', authenticate, createUpload, settingRoutes);
 app.use('/api/comments', authenticate, commentRoutes);
+app.use('/api', authenticate, commonRoutes);
  
 // File upload route
 app.use('/api/upload', authenticate, createUpload, uploadRoutes);  // Apply upload middleware to the '/upload' route
