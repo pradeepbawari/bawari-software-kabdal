@@ -253,7 +253,7 @@ const updateOrder = async (req, res) => {
 };
 
 const quotationUpdate = async (req, res) => {
-  const { order_id, status, payment_status, comments, items, userData } = req.body;
+  const { order_id, status, payment_status, comments, items, userData, statusType } = req.body;
 
   try {
     // Validate order existence
@@ -337,6 +337,7 @@ for (const item of items) {
     order.status = status;
     order.payment_status = payment_status;
     order.comments = comments;
+    order.statusType = statusType
 
     await order.save();
 

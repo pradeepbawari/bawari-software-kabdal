@@ -52,7 +52,6 @@ const createProducts = async (req, res) => {
     if (productId &&variants || variants.length > 0) {
       const variantPromises = variants.map(async (variant) => {
         const { price, sale_price, stock, deleted, materials, colour, dimensions } = variant;
-
         // Create product variant
         return db.Variant.create({
           product_id: productId,
@@ -63,7 +62,7 @@ const createProducts = async (req, res) => {
           materials,
           deleted,
           dimensions
-        });      
+        });              
       });
   
       await Promise.all(variantPromises);  
@@ -92,6 +91,12 @@ const fetchAfterUpdate = async (productId) => {
           model: db.Category,
           as: 'category',
           attributes: ['id', 'name'],
+        },
+        {
+          model: db.Variant,
+          as: "variants",
+          required: false,
+          attributes: ["id", "colour", "dimensions", "materials", "sale_price", "colour","stock"]
         },
       ],
     });
