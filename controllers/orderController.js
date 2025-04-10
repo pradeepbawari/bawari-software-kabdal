@@ -361,95 +361,9 @@ for (const item of items) {
     order.statusType = statusType
 
     await order.save();
-    // await updateOrderPrice(req.body)
     res.status(200).json({ message: 'Order updated successfully!', order });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ error: error.message });
-  }
-};
-
-const updateOrderPrice = async (data) => {
-  const { order_id, status, payment_status, comments, items, userData } = data;
-
-  try {
-    // Validate order existence
-    const order = await db.Order.findByPk(order_id);
-    if (!order) {
-      return res.status(404).json({ error: 'Order not found' });
-    }
-
-    // Ensure items are present and valid
-    if (!items || !Array.isArray(items) || items.length === 0) {
-      return res.status(400).json({ error: 'Items array is required' });
-    }
-
-    // Validate products in the items
-    const productIds = items.map((item) => item.product_id);
-    const products = await db.Product.findAll({ where: { id: productIds } });
-
-    const productIdsInDb = products.map((product) => product.id);
-    const invalidProductIds = productIds.filter((id) => !productIdsInDb.includes(id));
-
-    if (invalidProductIds.length > 0) {
-      return res.status(400).json({ error: `Product(s) with id(s) ${invalidProductIds.join(', ')} do not exist` });
-    }
-
-    // Recalculate totals and prepare updated items
-    let totalAmount = 0;
-    let gstAmount = 0;
-    let offerTotal = 0;
-
-    for (const item of items) {
-      const itemTotal = item.price * item.quantity;
-      const itemGST = (item.price * item.gst_rate * item.quantity) / 100;
-      totalAmount += itemTotal;
-      gstAmount += itemGST;
-
-      const sale_price = parseFloat(item.price) || 0;
-      const quantity = parseFloat(item.quantity) || 0;
-      const gst = parseFloat(item.gst_rate) || 0;
-      const offer = parseFloat(item.offer) || 0;
-
-      const totalWithGst = (sale_price * quantity) + ((sale_price * quantity * gst) / 100);
-      const offerAmount = (totalWithGst * (offer / 100));
-      offerTotal += offerAmount;
-
-      // Upsert order item (Insert if not exists, Update if exists)
-      await db.OrderItem.upsert({
-        order_id: order.id,
-        product_id: item.product_id,
-        quantity: item.quantity,
-        offer: item.offer,
-        price: item.price,
-        gst: item.gst_rate,
-        total: itemTotal + itemGST,
-        dimensions: item.dimensions,
-        id:item.id,
-        variantId: item.variantId
-      }, {
-        where: {
-          order_id: order.id,
-          product_id: item.product_id,
-        }
-      });
-    }
-
-    // Update order details
-    order.total_amount = totalAmount;
-    order.gst_amount = gstAmount;
-    order.grand_total = totalAmount + gstAmount;
-    order.offer = offerTotal;
-    order.status = status;
-    order.payment_status = payment_status;
-    order.comments = comments;
-
-    await order.save();
-    return;
-    res.status(200).json({ message: 'Order updated successfully!', order });
-  } catch (error) {
-    console.error(error);
-    return;
     res.status(500).json({ error: error.message });
   }
 };
