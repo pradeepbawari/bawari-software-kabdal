@@ -40,6 +40,8 @@ db.productNew = require('./productNew')(sequelize, DataTypes);
 db.productAttribute = require('./productAttribute')(sequelize, DataTypes);
 db.companyNew = require('./companyNew')(sequelize, DataTypes);
 db.materialsList = require('./materials_list')(sequelize, DataTypes);
+db.dimensionType = require('./dimension_type')(sequelize, DataTypes);
+db.dimensionUnit = require('./dimension_unit')(sequelize, DataTypes);
 // Define relationships
 
 db.Product.belongsTo(db.Category, { foreignKey: 'category_id', as: 'category' });

@@ -90,82 +90,103 @@ const createUserOrder = async (req, res) => {
   const { user_id, status, payment_status, comments, items, userData, statusType } = req.body;
 
   try {
-    // Ensure items are present and have the correct structure
     if (!items || !Array.isArray(items) || items.length === 0) {
       return res.status(400).json({ error: 'Items array is required' });
     }
 
-    // Calculate totals
     let totalAmount = 0;
     let gstAmount = 0;
     let offerTotal = 0;
 
-    // Check if each product exists in the products table
-    const productIds = items.map(item => item.product_id);
-    const products = await db.Variant.findAll({
-      where: {
-        product_id: productIds,
-      }
+    // Separate items into variant-based and plain products
+    const variantProductIds = items
+      .filter(item => item.variantId)
+      .map(item => item.product_id);
+
+    const plainProductIds = items
+      .filter(item => !item.variantId)
+      .map(item => item.product_id);
+
+    // Fetch products from respective tables
+    const variantProducts = await db.Variant.findAll({
+      where: { product_id: variantProductIds }
     });
 
-    const productIdsInDb = products.map(product => product.product_id);
-    const invalidProductIds = productIds.filter(id => !productIdsInDb.includes(id));
+    const plainProducts = await db.Product.findAll({
+      where: { id: plainProductIds }
+    });
+
+    const validVariantProductIds = variantProducts.map(p => p.product_id);
+    const validPlainProductIds = plainProducts.map(p => p.id);
+    const allValidIds = [...validVariantProductIds, ...validPlainProductIds];
+
+    const allProductIds = items.map(item => item.product_id);
+    const invalidProductIds = allProductIds.filter(id => !allValidIds.includes(id));
 
     if (invalidProductIds.length > 0) {
-      return res.status(400).json({ error: `Product(s) with id(s) ${invalidProductIds.join(', ')} do not exist` });
+      return res.status(400).json({
+        error: `Product(s) with id(s) ${invalidProductIds.join(', ')} do not exist`
+      });
     }
 
-    const orderItems = items.map((item) => {
-      const itemTotal = item.price * item.quantity;
-      const itemGST = (item.price * item.gst_rate * item.quantity) / 100;
-      totalAmount += itemTotal;
-      gstAmount += itemGST;
-      
-      const sale_price = item.price === '' ? 0 : parseFloat(item.price);
+    const orderItems = items.map(item => {
+      const price = item.price === '' ? 0 : parseFloat(item.price);
       const quantity = item.quantity === '' ? 0 : parseFloat(item.quantity);
       const gst = item.gst_rate === '' ? 0 : parseFloat(item.gst_rate);
-      const offer = item?.offer === '' ? 0 : parseFloat(item?.offer);
-      const totalwithGst = ((sale_price * quantity) + (((sale_price * quantity) * gst)/100))
-      const offerAmount = (totalwithGst * (offer/100));
+      const offer = item.offer === '' ? 0 : parseFloat(item.offer);
 
-      offerTotal += offerAmount
+      const itemTotal = price * quantity;
+      const itemGST = (itemTotal * gst) / 100;
+      const totalWithGst = itemTotal + itemGST;
+      const offerAmount = (totalWithGst * offer) / 100;
+
+      totalAmount += itemTotal;
+      gstAmount += itemGST;
+      offerTotal += offerAmount;
 
       return {
         product_id: item.product_id,
-        quantity: item.quantity,
-        price: item.price,
-        gst: item.gst_rate,
-        variantId:item.variantId,
-        offer: item.offer,
-        dimensions: item.dimensions,
-        total: itemTotal + itemGST,
+        quantity: quantity,
+        price: price,
+        gst: gst,
+        variantId: item.variantId || null,
+        offer: offer,
+        dimensions: item.dimensions || null,
+        total: totalWithGst
       };
     });
 
     // Create Order
     const order = await db.Order.create({
       user_id,
-	  status,
-	  payment_status,
-    comments,
+      status,
+      payment_status,
+      comments,
       total_amount: totalAmount,
       gst_amount: gstAmount,
       grand_total: totalAmount + gstAmount,
-      offer:  offerTotal,
+      offer: offerTotal,
       statusType: statusType
     });
 
-    // Add Items
+    // Insert order items
     await db.OrderItem.bulkCreate(
-      orderItems.map((item) => ({ ...item, order_id: order.id }))
+      orderItems.map(item => ({
+        ...item,
+        order_id: order.id
+      }))
     );
-    // await sendEmail({ userData: userData, items: items });
+
+    // Optionally send confirmation email
+    // await sendEmail({ userData, items });
+
     res.status(201).json({ message: 'Order created successfully!', order });
   } catch (error) {
-    console.error(error);  // For debugging purposes
+    console.error(error);
     res.status(500).json({ error: error.message });
   }
 };
+
 
 
 const updateOrder = async (req, res) => {
@@ -340,10 +361,95 @@ for (const item of items) {
     order.statusType = statusType
 
     await order.save();
-
+    // await updateOrderPrice(req.body)
     res.status(200).json({ message: 'Order updated successfully!', order });
   } catch (error) {
     console.error(error);
+    res.status(500).json({ error: error.message });
+  }
+};
+
+const updateOrderPrice = async (data) => {
+  const { order_id, status, payment_status, comments, items, userData } = data;
+
+  try {
+    // Validate order existence
+    const order = await db.Order.findByPk(order_id);
+    if (!order) {
+      return res.status(404).json({ error: 'Order not found' });
+    }
+
+    // Ensure items are present and valid
+    if (!items || !Array.isArray(items) || items.length === 0) {
+      return res.status(400).json({ error: 'Items array is required' });
+    }
+
+    // Validate products in the items
+    const productIds = items.map((item) => item.product_id);
+    const products = await db.Product.findAll({ where: { id: productIds } });
+
+    const productIdsInDb = products.map((product) => product.id);
+    const invalidProductIds = productIds.filter((id) => !productIdsInDb.includes(id));
+
+    if (invalidProductIds.length > 0) {
+      return res.status(400).json({ error: `Product(s) with id(s) ${invalidProductIds.join(', ')} do not exist` });
+    }
+
+    // Recalculate totals and prepare updated items
+    let totalAmount = 0;
+    let gstAmount = 0;
+    let offerTotal = 0;
+
+    for (const item of items) {
+      const itemTotal = item.price * item.quantity;
+      const itemGST = (item.price * item.gst_rate * item.quantity) / 100;
+      totalAmount += itemTotal;
+      gstAmount += itemGST;
+
+      const sale_price = parseFloat(item.price) || 0;
+      const quantity = parseFloat(item.quantity) || 0;
+      const gst = parseFloat(item.gst_rate) || 0;
+      const offer = parseFloat(item.offer) || 0;
+
+      const totalWithGst = (sale_price * quantity) + ((sale_price * quantity * gst) / 100);
+      const offerAmount = (totalWithGst * (offer / 100));
+      offerTotal += offerAmount;
+
+      // Upsert order item (Insert if not exists, Update if exists)
+      await db.OrderItem.upsert({
+        order_id: order.id,
+        product_id: item.product_id,
+        quantity: item.quantity,
+        offer: item.offer,
+        price: item.price,
+        gst: item.gst_rate,
+        total: itemTotal + itemGST,
+        dimensions: item.dimensions,
+        id:item.id,
+        variantId: item.variantId
+      }, {
+        where: {
+          order_id: order.id,
+          product_id: item.product_id,
+        }
+      });
+    }
+
+    // Update order details
+    order.total_amount = totalAmount;
+    order.gst_amount = gstAmount;
+    order.grand_total = totalAmount + gstAmount;
+    order.offer = offerTotal;
+    order.status = status;
+    order.payment_status = payment_status;
+    order.comments = comments;
+
+    await order.save();
+    return;
+    res.status(200).json({ message: 'Order updated successfully!', order });
+  } catch (error) {
+    console.error(error);
+    return;
     res.status(500).json({ error: error.message });
   }
 };

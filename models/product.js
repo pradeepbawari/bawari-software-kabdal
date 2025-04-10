@@ -51,6 +51,10 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.STRING,
       allowNull: false,
     },
+    discription: {
+      type: DataTypes.STRING,
+      allowNull: false,
+    },
   }, {
     tableName: 'products',
     timestamps: true,

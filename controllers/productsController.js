@@ -15,6 +15,7 @@ const createProducts = async (req, res) => {
       category_id, 
       dealer_id, 
       company, 
+      discription,
       variants,
       subcategory_id
     } = req.body;
@@ -33,6 +34,7 @@ const createProducts = async (req, res) => {
       category_id, 
       dealer_id, 
       company,
+      discription,
       subcategory_id
     });
     const productId = product.id;
@@ -190,7 +192,7 @@ const getAllProducts = async (req, res) => {
 
 const updateProducts = async (req, res) => {
   try {
-    const { id, name, stock, gst_rate, price, sale_price, category_id, dealer_id, company, variants, subcategory_id } = req.body;
+    const { id, name, stock, gst_rate, price, sale_price, category_id, dealer_id, company, discription, variants, subcategory_id } = req.body;
 
     if (!id) {
       return res.status(400).json({ error: 'Product ID is required for updating.' });
@@ -198,7 +200,7 @@ const updateProducts = async (req, res) => {
 
     // 1. Update the main product details
     const product = await db.Product.update(
-      { name, stock, gst_rate, price, sale_price, category_id, dealer_id, company, subcategory_id },
+      { name, stock, gst_rate, price, sale_price, category_id, dealer_id, company, discription, subcategory_id },
       { where: { id } }
     );
 
@@ -282,7 +284,7 @@ const deleteProducts = async (req, res) => {
 
 const filterProducts = async (req, res) => {
   try {
-    const { limit = 10, offset = 0, orderBy, filters } = req.body;
+    const { limit = 100, offset = 0, orderBy, filters } = req.body;
     
     const parsedLimit = parseInt(limit, 10);
     const parsedOffset = parseInt(offset, 10);
@@ -309,6 +311,7 @@ const filterProducts = async (req, res) => {
           model: db.Variant,
           as: "variants",
           required: false,
+          where: { deleted: 0 },
           attributes: ["id", "colour", "dimensions", "materials", "sale_price", "colour","stock"]
         },
         {

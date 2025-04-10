@@ -113,6 +113,8 @@ function getModel(type) {
     case 'companies': return db.companyNew;
     case 'dealers': return db.Dealer;
     case 'materials': return db.materialsList;
+    case 'dimensiontype': return db.dimensionType;
+    case 'dimensionunit': return db.dimensionUnit;
     default: throw new Error("Invalid type");
   }
 }
