@@ -312,7 +312,14 @@ const filterProducts = async (req, res) => {
           as: "variants",
           required: false,
           where: { deleted: 0 },
-          attributes: ["id", "colour", "dimensions", "materials", "sale_price", "colour","stock"]
+          attributes: ["id", "colour", "dimensions", "materials", "sale_price", "colour","stock"],
+          include: [
+            {
+              model: db.materialsList,
+              as: "materialDetail",
+              attributes: ["id", "name"],
+            },
+          ],
         },
         {
           model: db.ProductImage,

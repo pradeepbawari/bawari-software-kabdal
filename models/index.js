@@ -119,7 +119,17 @@ db.Subcategory.belongsTo(db.Category, { foreignKey: "category_id", as: "Category
 
 db.Subcategory.hasMany(db.Subcategory, { foreignKey: "parent_id", as: "subcategories" }); // Self-referencing
 db.Subcategory.belongsTo(db.Subcategory, { foreignKey: "parent_id", as: "parent" }); // Self-referencing
+db.Variant.belongsTo(db.materialsList, {
+  foreignKey: 'materials',
+  targetKey: 'id',
+  as: 'materialDetail',
+});
 
+db.materialsList.hasMany(db.Variant, {
+  foreignKey: 'materials',
+  sourceKey: 'id',
+  as: 'variants',
+});
 
 // Add this to your Subcategory model (if not already defined)
 // In your Subcategory model:
