@@ -7,7 +7,9 @@ const dealerRoutes = require('./routes/dealerRoutes');
 const orderRoutes = require('./routes/orderRoutes');
 const searchRoutes = require('./routes/searchRoutes');
 const categoryRoutes = require('./routes/categoryRoutes');
+const categoryRoutesUser = require('./routes/categoryRoutesUser');
 const productsRoutes = require('./routes/productsRoutes');
+const productsRoutesUser = require('./routes/productsRoutesUser');
 const checkLastUpdateRoutes = require('./routes/checkLastUpdateRoutes');
 const dashboardRoutes = require('./routes/dashboardRoutes');
 const invoiceRoutes = require('./routes/invoiceRoutes');
@@ -18,6 +20,7 @@ const authenticate = require('./utiles/middleware');
 const adminRoutes = require('./routes/adminRoutes');
 const commentRoutes = require('./routes/commentRoutes');
 const commonRoutes = require('./routes/commonRoutes');
+const excelExportRoutes = require('./routes/excelExportRoutes');
 
 // Import the upload middleware
 const { upload, uploadPDF } = require('./uploadImages/imageUpload'); 
@@ -61,6 +64,8 @@ app.use('/api/dealers', authenticate, dealerRoutes);
 app.use('/api/orders', authenticate, orderRoutes);
 app.use('/api/categories', authenticate, categoryRoutes);
 app.use('/api/products', authenticate, productsRoutes);
+app.use('/api/categories_user', categoryRoutesUser);
+app.use('/api/products_user', productsRoutesUser);
 app.use('/api/data', authenticate, checkLastUpdateRoutes);
 app.use('/api/dashboard', authenticate, dashboardRoutes);
 app.use('/api/invoice', authenticate, invoiceRoutes);
@@ -68,6 +73,7 @@ app.use('/api/search', authenticate, searchRoutes);
 app.use('/api/setting', authenticate, createUpload, settingRoutes);
 app.use('/api/comments', authenticate, commentRoutes);
 app.use('/api', authenticate, commonRoutes);
+app.use('/api/export', authenticate, excelExportRoutes);
  
 // File upload route
 app.use('/api/upload', authenticate, createUpload, uploadRoutes);  // Apply upload middleware to the '/upload' route
