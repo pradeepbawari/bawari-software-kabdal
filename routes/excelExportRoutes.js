@@ -12,6 +12,8 @@ router.post('/export-excel', async (req, res) => {
     { header: 'ID', key: 'Id', width: 10 },
     { header: 'Product Name', key: 'Product Name', width: 30 },
     { header: 'Company', key: 'Company', width: 20 },
+    { header: 'Dimensions', key: 'Dimensions', width: 50 },
+    { header: 'Material', key: 'Material', width: 20 },    
     { header: 'Qty', key: 'Qty', width: 10 },
     { header: 'Image', key: 'Image', width: 20 }
   ];
@@ -28,9 +30,14 @@ router.post('/export-excel', async (req, res) => {
       Id: item.Id,
       'Product Name': item["Product Name"],
       Company: item.Company || '',
+      Dimensions: item.Dimensions 
+        ? item.Dimensions.map(d => `${d.type}: ${d.value} ${d.unit}`).join(', ') 
+        : '',
+      Material: item.Material,
       Qty: item.Qty,
       Image: ''
     });
+    
 
     const row = worksheet.getRow(rowIndex);
 
@@ -46,7 +53,7 @@ router.post('/export-excel', async (req, res) => {
         });
 
         worksheet.addImage(imageId, {
-          tl: { col: 4, row: rowIndex - 1 },
+          tl: { col: 6, row: rowIndex - 1 },
           ext: { width: 100, height: imageHeightPx },
         });
 
