@@ -352,6 +352,7 @@ const filterProducts = async (req, res) => {
     // Process dealer information efficiently
     const productWithDealers = await Promise.all(
       products.rows.map(async (product) => {
+        const companyid = product?.company ? product?.company : null;
         const dealerIds = product.dealer_id
           ? product.dealer_id.split(",").map(Number).filter((id) => !isNaN(id))
           : [];
@@ -363,14 +364,29 @@ const filterProducts = async (req, res) => {
             })
           : [];
 
-        return { ...product.toJSON(), dealers };
+        const companyName =  await db.companyNew.findAll({
+          where: {company_id: companyid},
+          attributes: ["company_id", "name"],
+        })          
+        return { ...product.toJSON(), dealers, companyName };
       })
     );
+
+    const diamensionType =  await db.dimensionType.findAll({
+      attributes: ["id", "name"],
+    })
+
+    const diamensionUnit =  await db.dimensionUnit.findAll({
+      attributes: ["id", "name"],
+    })
+
 
     res.json({
       products: {
         count: products.count,
         rows: productWithDealers,
+        diamensionType: diamensionType,
+        diamensionUnit: diamensionUnit
       },
     });
 
