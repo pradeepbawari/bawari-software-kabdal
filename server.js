@@ -32,7 +32,7 @@ const corsOptions = {
   // local
   // origin: ['http://gobuyly.com', 'http://admin.gobuyly.com', 'http://147.93.28.231', 'http://srv748278.hstgr.cloud', 'http://localhost:5173', 'http://localhost:5174'], 
   // production
-   origin: ['https://admin.gobuyly.com', 'https://147.93.28.231', 'http://srv748278.hstgr.cloud', 'https://srv748278.hstgr.cloud', 'https://gobuyly.com'], 
+   origin: ['http://admin.gobuyly.com', 'http://147.93.28.231', 'http://srv748278.hstgr.cloud', 'https://gobuyly.com'], 
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
   credentials: true, // Required if using cookies or tokens
