@@ -32,7 +32,7 @@ const corsOptions = {
   // local
   // origin: ['http://gobuyly.com', 'http://admin.gobuyly.com', 'http://147.93.28.231', 'http://srv748278.hstgr.cloud', 'http://localhost:5173', 'http://localhost:5174'], 
   // production
-   origin: ['http://admin.gobuyly.com', 'https://147.93.28.231', 'https://srv748278.hstgr.cloud', 'https://gobuyly.com'], 
+   origin: ['http://admin.gobuyly.com', 'https://147.93.28.231', 'https://srv748278.hstgr.cloud', 'http://srv748278.hstgr.cloud', 'https://gobuyly.com'], 
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
   credentials: true, // Required if using cookies or tokens
@@ -81,15 +81,15 @@ app.use('/api/upload', authenticate, createUpload, uploadRoutes);  // Apply uplo
 app.use('/api/invoice', authenticate, createUploadPDF, uploadPDFRoutes); 
 
 // Test DB Connection
-// db.sequelize
-//   .authenticate()
-//   .then(() => console.log('Database connected bawari...'))
-//   .catch((err) => console.log('Error: ' + err));
-
 db.sequelize
   .authenticate()
   .then(() => console.log('Database connected bawari...'))
-  .catch((err) => console.log('Error: '));
+  .catch((err) => console.log('Error: ' + err));
+
+// db.sequelize
+//   .authenticate()
+//   .then(() => console.log('Database connected bawari...'))
+//   .catch((err) => console.log('Error: '));
 
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`Server running on http://0.0.0.0:${PORT}`);
