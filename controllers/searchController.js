@@ -211,23 +211,53 @@ const searchUserProduct = async (req, res) => {
       //order: orderBy.sort
 	}); // Fetch all users
 
+  // const productsWithDealers = await Promise.all(
+  //   products.rows.map(async (product) => {
+  //     const dealerIds = product.dealer_id.split(',').map(Number); // Split and convert to integers
+  //     const dealers = await db.Dealer.findAll({
+  //       where: { id: dealerIds },
+  //       attributes: ['id', 'name', 'email', 'mobile_number', 'address', 'dealer_status', 'company'],
+  //     });
+
+  //     return {
+  //       ...product.toJSON(),
+  //       dealers,
+  //     };
+  //   })
+  // );
   const productsWithDealers = await Promise.all(
     products.rows.map(async (product) => {
-      const dealerIds = product.dealer_id.split(',').map(Number); // Split and convert to integers
-      const dealers = await db.Dealer.findAll({
-        where: { id: dealerIds },
-        attributes: ['id', 'name', 'email', 'mobile_number', 'address', 'dealer_status', 'company'],
-      });
+      const companyid = product?.company ? product?.company : null;
+      const dealerIds = product.dealer_id
+        ? product.dealer_id.split(",").map(Number).filter((id) => !isNaN(id))
+        : [];
 
-      return {
-        ...product.toJSON(),
-        dealers,
-      };
+      const dealers = dealerIds.length
+        ? await db.Dealer.findAll({
+            where: { id: { [Op.in]: dealerIds } },
+            attributes: ["id", "name", "company", "email", "mobile_number", "dealer_status"],
+          })
+        : [];
+
+      const companyName =  await db.companyNew.findAll({
+        where: {company_id: companyid},
+        attributes: ["company_id", "name"],
+      })          
+      return { ...product.toJSON(), dealers, companyName };
     })
-  );
+    );
+    const diamensionType =  await db.dimensionType.findAll({
+      attributes: ["id", "name"],
+    })
+
+    const diamensionUnit =  await db.dimensionUnit.findAll({
+      attributes: ["id", "name"],
+  })
   res.status(200).json({ products: {
     count: products.count,
-    rows: productsWithDealers
+    rows: productsWithDealers,
+    diamensionType: diamensionType,
+    diamensionUnit: diamensionUnit
   }});
     // res.status(200).json({ products });
   } catch (error) {
