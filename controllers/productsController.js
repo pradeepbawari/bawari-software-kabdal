@@ -157,7 +157,7 @@ const getAllProducts = async (req, res) => {
       ],
       order: orderByCondition, // Apply the ordering condition
       where: whereCondition, // Apply the filters (or no filter if filters is null)
-      limit: parsedLimit, // Apply pagination limit
+      //limit: parsedLimit, // Apply pagination limit
       offset: parsedOffset, // Apply pagination offset
       distinct: true,  // Add this to fix duplicate count issue
       col: 'id' // Ensures distinct is applied correctly on primary key
