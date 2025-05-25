@@ -157,7 +157,7 @@ const getAllProducts = async (req, res) => {
       ],
       order: orderByCondition, // Apply the ordering condition
       where: whereCondition, // Apply the filters (or no filter if filters is null)
-      //limit: parsedLimit, // Apply pagination limit
+      limit: parsedLimit, // Apply pagination limit
       offset: parsedOffset, // Apply pagination offset
       distinct: true,  // Add this to fix duplicate count issue
       col: 'id' // Ensures distinct is applied correctly on primary key
@@ -197,7 +197,6 @@ const updateProducts = async (req, res) => {
     if (!id) {
       return res.status(400).json({ error: 'Product ID is required for updating.' });
     }
-
     // 1. Update the main product details
     const product = await db.Product.update(
       { name, stock, gst_rate, price, sale_price, category_id, dealer_id, company, discription, subcategory_id },
